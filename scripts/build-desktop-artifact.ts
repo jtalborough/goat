@@ -92,13 +92,13 @@ import { loadRepoEnv } from "./lib/public-config.ts";
 import { selectDesktopRuntimeExternalDependencies } from "./lib/desktop-external-packages.ts";
 import { resolveCatalogDependencies } from "./lib/resolve-catalog.ts";
 import { resolveTaggedSourceVersion } from "./lib/tagged-source-version.ts";
-import { isForkDesktopVersion } from "@goat/shared/desktopAppServer";
 import {
   DESKTOP_APP_ID,
+  isDesktopPreviewVersion,
   resolveDesktopAppId,
   resolveDesktopProductName,
 } from "./lib/desktop-product-identity.ts";
-export { resolveDesktopAppId, resolveDesktopProductName };
+export { resolveDesktopAppId, resolveDesktopProductName, isDesktopPreviewVersion };
 
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import * as NodeServices from "@effect/platform-node/NodeServices";
@@ -2925,12 +2925,6 @@ export const resolveGitHubPublishConfig = Effect.fn("resolveGitHubPublishConfig"
 
 import { resolveDesktopUpdateChannel } from "./lib/desktop-release-channel.ts";
 export { resolveDesktopUpdateChannel };
-
-export function isDesktopPreviewVersion(version: string): boolean {
-  return (
-    isForkDesktopVersion(version) || /-pr\./.test(version) || /-preview\.\d{8}\.\d+$/.test(version)
-  );
-}
 
 /** A "-preview." build runs nightly's helper; a "-pr." build keeps stable's (isNightlyDesktopVersion). */
 export function resolveWindowsHelperChannel(version: string): "stable" | "nightly" | "preview" {

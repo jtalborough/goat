@@ -1,7 +1,16 @@
-import { isForkDesktopVersion } from "@goat/shared/desktopAppServer";
+import { isForkDesktopVersion, isMainForkDesktopVersion } from "@goat/shared/desktopAppServer";
 import { resolveDesktopUpdateChannel } from "./desktop-release-channel.ts";
 
 export const DESKTOP_APP_ID = "si.goat.desktop";
+
+export function isDesktopPreviewVersion(version: string): boolean {
+  return (
+    isForkDesktopVersion(version) ||
+    isMainForkDesktopVersion(version) ||
+    /-pr\./.test(version) ||
+    /-preview\.\d{8}\.\d+$/.test(version)
+  );
+}
 
 export function resolveDesktopProductName(version: string): string {
   if (isForkDesktopVersion(version)) return "GOAT (Fork)";

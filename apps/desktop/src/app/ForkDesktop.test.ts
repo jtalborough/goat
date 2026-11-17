@@ -10,6 +10,22 @@ import {
 import { computerUseHelperBundleIdForChannel } from "@goat/shared/cuaDriverRelease";
 
 describe("packaged fork profile", () => {
+  it("an explicit main fork build retains the regular profile, Keychain name and helper identity", () => {
+    const version = "1.2.3-mainfork.20261117.1.g012345abcdef";
+    assert.equal(
+      resolveDesktopBaseDir({
+        homeDirectory: "/home/user",
+        joinPath: (...parts) => parts.join("/"),
+        goatHome: Option.none(),
+        isDevelopment: false,
+        appVersion: version,
+      }),
+      "/home/user/.goat/desktop",
+    );
+    const branding = resolveDesktopAppBranding({ isDevelopment: false, appVersion: version });
+    assert.equal(desktopRuntimeAppName(branding.stageLabel, version), "GOAT Alpha");
+    assert.equal(desktopChannel({ isDevelopment: false, appVersion: version }), "stable");
+  });
   it("separates its profile and Keychain name from stable without migrating stable data", () => {
     const version = "1.2.3-fork.20261117.1";
     const base = {

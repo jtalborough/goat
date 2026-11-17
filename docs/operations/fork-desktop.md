@@ -21,3 +21,19 @@ upstream's installer cannot replace the custom build. `--build-only` builds and
 verifies the current checkout without syncing, pushing, installing or launching.
 Local packages are ad-hoc signed, rather than Apple-notarized releases; macOS may
 ask for Keychain or privacy access when the new app first uses those capabilities.
+
+## Use the fork as the main app
+
+Add `--main` to replace `/Applications/GOAT.app` with your fork while keeping the
+regular app's existing backend home, Chromium profile and Keychain identity.
+The previous app is archived before replacement. Main fork versions include
+`-mainfork.DATE.EPOCH.gCOMMIT` and omit the upstream update feed.
+Before replacement, the stopped app's userdata and Chromium profile are backed
+up under `~/.goat/fork-main-backups`.
+
+Quit regular GOAT and run updates from a standalone Terminal: GOAT cannot safely
+replace the app hosting the update command. To prepare before quitting, use
+`node scripts/fork-desktop.ts --main --build-only`. After quitting, install that
+verified bundle with `node scripts/fork-desktop.ts --main --install-built /path/to/GOAT.app`.
+This mode uses the regular profile directly; it does not merge anything created
+in the isolated GOAT (Fork) profile. Do not run two main builds against that profile.

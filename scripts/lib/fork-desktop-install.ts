@@ -3,12 +3,17 @@ import * as NodeFS from "node:fs";
 import * as NodePath from "node:path";
 import * as NodeCrypto from "node:crypto";
 import Plist from "plist";
-import { isForkDesktopVersion } from "@goat/shared/desktopAppServer";
+import { isForkDesktopVersion, isMainForkDesktopVersion } from "@goat/shared/desktopAppServer";
 
 export const FORK_APP_NAME = "GOAT (Fork).app";
 const FORK_APP_ID = "si.goat.desktop.fork";
+export const MAIN_FORK_APP_NAME = "GOAT.app";
 
-export function verifyForkApplication(app: string): string {
+function verifyApplication(
+  app: string,
+  id: string,
+  acceptsVersion: (version: string) => boolean,
+): string {
   if (NodeFS.lstatSync(app).isSymbolicLink()) throw new Error("Refusing a symlinked app bundle.");
   const info = NodePath.join(app, "Contents", "Info.plist");
   if (!NodeFS.realpathSync(info).startsWith(NodeFS.realpathSync(app) + NodePath.sep))
@@ -22,21 +27,39 @@ export function verifyForkApplication(app: string): string {
     !("CFBundleShortVersionString" in parsed)
   )
     throw new Error("App metadata is not a dictionary.");
-  const id = parsed.CFBundleIdentifier;
   const version = parsed.CFBundleShortVersionString;
-  if (id !== FORK_APP_ID || typeof version !== "string" || !isForkDesktopVersion(version))
+  if (parsed.CFBundleIdentifier !== id || typeof version !== "string" || !acceptsVersion(version))
     throw new Error(
-      "Refusing to install or replace an app without the GOAT Fork identity and version.",
+      "Refusing to install or replace an app without the expected GOAT Fork identity and version.",
     );
   if (!NodeFS.statSync(NodePath.join(app, "Contents", "Resources", "app.asar")).isFile())
     throw new Error("The packaged application is missing app.asar.");
   return version;
 }
 
-export function installForkApplication(source: string, destination: string): string | undefined {
-  if (NodePath.basename(destination) !== FORK_APP_NAME)
-    throw new Error("The install destination must be named GOAT (Fork).app.");
-  verifyForkApplication(source);
+export const verifyForkApplication = (app: string) =>
+  verifyApplication(app, FORK_APP_ID, isForkDesktopVersion);
+
+export const verifyMainForkApplication = (app: string) =>
+  verifyApplication(app, "si.goat.desktop", isMainForkDesktopVersion);
+
+const verifyMainApplication = (app: string) =>
+  verifyApplication(app, "si.goat.desktop", (version) =>
+    /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?$/.test(version),
+  );
+
+function installApplication(
+  source: string,
+  destination: string,
+  policy: {
+    readonly name: string;
+    readonly verifySource: (app: string) => string;
+    readonly verifyDestination: (app: string) => string;
+  },
+): string | undefined {
+  if (NodePath.basename(destination) !== policy.name)
+    throw new Error(`The install destination must be named ${policy.name}.`);
+  policy.verifySource(source);
   const exists =
     NodeFS.existsSync(destination) ||
     (() => {
@@ -54,12 +77,12 @@ export function installForkApplication(source: string, destination: string): str
         throw cause;
       }
     })();
-  const oldVersion = exists ? verifyForkApplication(destination) : undefined;
+  const oldVersion = exists ? policy.verifyDestination(destination) : undefined;
   NodeFS.mkdirSync(NodePath.dirname(destination), { recursive: true });
   const staging = NodeFS.mkdtempSync(
     NodePath.join(NodePath.dirname(destination), ".goat-fork-install-"),
   );
-  const staged = NodePath.join(staging, FORK_APP_NAME);
+  const staged = NodePath.join(staging, policy.name);
   let backup: string | undefined;
   try {
     NodeFS.cpSync(source, staged, {
@@ -67,7 +90,7 @@ export function installForkApplication(source: string, destination: string): str
       verbatimSymlinks: true,
       preserveTimestamps: true,
     });
-    verifyForkApplication(staged);
+    policy.verifySource(staged);
     if (oldVersion !== undefined) {
       const backups = NodePath.join(NodePath.dirname(destination), ".goat-fork-backups");
       NodeFS.mkdirSync(backups, { recursive: true });
@@ -85,3 +108,18 @@ export function installForkApplication(source: string, destination: string): str
     NodeFS.rmSync(staging, { recursive: true, force: true });
   }
 }
+
+export const installForkApplication = (source: string, destination: string) =>
+  installApplication(source, destination, {
+    name: FORK_APP_NAME,
+    verifySource: verifyForkApplication,
+    verifyDestination: verifyForkApplication,
+  });
+
+/** Explicit opt-in replaces the main app's code; its profile and OS credentials stay in place. */
+export const installMainForkApplication = (source: string, destination: string) =>
+  installApplication(source, destination, {
+    name: MAIN_FORK_APP_NAME,
+    verifySource: verifyMainForkApplication,
+    verifyDestination: verifyMainApplication,
+  });

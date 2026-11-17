@@ -13,6 +13,11 @@ export function isForkDesktopVersion(version: string): boolean {
   return /^\d+\.\d+\.\d+-fork\.\d{8}\.\d+$/.test(version);
 }
 
+/** An explicit main-app build uses stable's profile and Keychain, without its update feed. */
+export function isMainForkDesktopVersion(version: string): boolean {
+  return /^\d+\.\d+\.\d+-mainfork\.\d{8}\.\d+\.g[0-9a-f]{12}$/.test(version);
+}
+
 /** `resolveDesktopStateDir` appends this for a packaged app and for an explicit home. */
 export const DESKTOP_USERDATA_DIR_NAME = "userdata";
 /** `resolveDesktopStateDir` appends this for a development build with no explicit home. */

@@ -6,8 +6,11 @@ import * as NodePath from "node:path";
 import Plist from "plist";
 import {
   FORK_APP_NAME,
+  MAIN_FORK_APP_NAME,
   installForkApplication,
+  installMainForkApplication,
   verifyForkApplication,
+  verifyMainForkApplication,
 } from "./fork-desktop-install.ts";
 
 function app(path: string, version: string, id = "si.goat.desktop.fork") {
@@ -32,6 +35,34 @@ function withDirectory(run: (root: string) => void) {
 }
 
 describe("fork app installation", () => {
+  it("explicit main installation preserves the regular app and its existing profile", () =>
+    withDirectory((root) => {
+      const source = NodePath.join(root, "build", MAIN_FORK_APP_NAME);
+      const destination = NodePath.join(root, "Applications", MAIN_FORK_APP_NAME);
+      const version = "1.2.3-mainfork.20261117.1.g012345abcdef";
+      app(source, version, "si.goat.desktop");
+      app(destination, "1.2.3", "si.goat.desktop");
+      const profile = NodePath.join(root, "existing-profile");
+      NodeFS.writeFileSync(profile, "existing configuration");
+      const backup = installMainForkApplication(source, destination);
+      if (backup === undefined) throw new Error("The regular app was not backed up.");
+      assert.equal(verifyMainForkApplication(destination), version);
+      assert.equal(
+        NodeFS.readFileSync(NodePath.join(backup, "Contents/Resources/app.asar"), "utf8"),
+        "1.2.3",
+      );
+      assert.equal(NodeFS.readFileSync(profile, "utf8"), "existing configuration");
+    }));
+
+  it("refuses a published stable package as the main fork installation source", () =>
+    withDirectory((root) => {
+      const source = NodePath.join(root, "build", MAIN_FORK_APP_NAME);
+      const destination = NodePath.join(root, "Applications", MAIN_FORK_APP_NAME);
+      app(source, "1.2.3", "si.goat.desktop");
+      assert.throws(() => installMainForkApplication(source, destination), /GOAT Fork identity/);
+      assert.isFalse(NodeFS.existsSync(destination));
+    }));
+
   it("preserves the previous app and leaves profile data outside the app untouched", () =>
     withDirectory((root) => {
       const source = NodePath.join(root, "build", FORK_APP_NAME);

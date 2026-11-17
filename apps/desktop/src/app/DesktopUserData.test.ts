@@ -59,6 +59,29 @@ it.effect.each(["darwin", "linux", "win32"] as const)(
     }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
 );
 
+it.effect(
+  "a main fork build uses the regular Chromium profile without replacing its contents",
+  () =>
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
+      const root = yield* fs.makeTempDirectoryScoped({ prefix: "goat-main-profile-" });
+      const existing = path.join(root, "goat-desktop");
+      yield* fs.makeDirectory(existing);
+      yield* fs.writeFileString(path.join(existing, "Local State"), "regular profile");
+      assert.equal(
+        yield* resolveUserDataPath({
+          appDataDirectory: root,
+          isDevelopment: false,
+          platform: "darwin",
+          appVersion: "1.2.3-mainfork.20261117.1.g012345abcdef",
+        }),
+        existing,
+      );
+      assert.equal(yield* fs.readFileString(path.join(existing, "Local State")), "regular profile");
+    }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
+);
+
 const gpuCacheDirectories = [
   "GPUCache",
   "GrShaderCache",
