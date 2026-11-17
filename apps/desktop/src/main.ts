@@ -119,6 +119,7 @@ Electron.app.setName(
       isDevelopment: (process.env.VITE_DEV_SERVER_URL ?? "").trim() !== "",
       appVersion: Electron.app.getVersion(),
     }).stageLabel,
+    Electron.app.getVersion(),
   ),
 );
 

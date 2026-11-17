@@ -25,6 +25,7 @@ import {
   type DesktopChannel,
 } from "@goat/shared/cuaDriverRelease";
 import { LEGACY_DESKTOP_RUNTIME_APP_BASE_NAME } from "@goat/contracts/legacyT3Names";
+import { isForkDesktopVersion } from "@goat/shared/desktopAppServer";
 
 export interface MakeDesktopEnvironmentInput {
   readonly dirname: string;
@@ -105,8 +106,10 @@ const APP_BASE_NAME = "GOAT";
  */
 const DESKTOP_RUNTIME_APP_BASE_NAME = "GOAT";
 
-export const desktopRuntimeAppName = (stageLabel: DesktopAppStageLabel) =>
-  `${DESKTOP_RUNTIME_APP_BASE_NAME} ${stageLabel}`;
+export const desktopRuntimeAppName = (stageLabel: DesktopAppStageLabel, appVersion?: string) =>
+  isForkDesktopVersion(appVersion ?? "")
+    ? "GOAT Fork"
+    : `${DESKTOP_RUNTIME_APP_BASE_NAME} ${stageLabel}`;
 
 /** The runtime name builds before D13 used, whose safeStorage key holds existing secrets. */
 export const legacyDesktopRuntimeAppName = (stageLabel: DesktopAppStageLabel) =>
@@ -128,7 +131,13 @@ export const desktopChannel = (input: {
   readonly isDevelopment: boolean;
   readonly appVersion: string;
 }): DesktopChannel =>
-  input.isDevelopment ? "dev" : isNightlyDesktopVersion(input.appVersion) ? "nightly" : "stable";
+  input.isDevelopment
+    ? "dev"
+    : isForkDesktopVersion(input.appVersion)
+      ? "fork"
+      : isNightlyDesktopVersion(input.appVersion)
+        ? "nightly"
+        : "stable";
 
 export function resolveDesktopAppBranding(input: {
   readonly isDevelopment: boolean;
@@ -138,7 +147,12 @@ export function resolveDesktopAppBranding(input: {
   return {
     baseName: APP_BASE_NAME,
     stageLabel,
-    displayName: stageLabel === "Alpha" ? APP_BASE_NAME : `${APP_BASE_NAME} (${stageLabel})`,
+    displayName:
+      !input.isDevelopment && isForkDesktopVersion(input.appVersion)
+        ? "GOAT (Fork)"
+        : stageLabel === "Alpha"
+          ? APP_BASE_NAME
+          : `${APP_BASE_NAME} (${stageLabel})`,
   };
 }
 

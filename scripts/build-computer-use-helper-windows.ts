@@ -42,6 +42,7 @@ export type HelperChannel = DesktopChannel | "preview";
 
 /** The packaged GOAT executable a release helper accepts as its parent (resolveDesktopProductName). */
 const CHANNEL_PARENTS: Record<HelperChannel, string> = {
+  fork: "GOAT (Fork).exe",
   stable: "GOAT.exe",
   nightly: "GOAT (Nightly).exe",
   preview: "GOAT.exe",
@@ -53,6 +54,7 @@ const CHANNEL_PARENTS: Record<HelperChannel, string> = {
  * app runs the nightly channel's helper, because isNightlyDesktopVersion covers previews.
  */
 const HELPER_BUNDLE_IDS: Record<HelperChannel, string> = {
+  fork: computerUseHelperBundleIdForChannel("fork"),
   stable: computerUseHelperBundleIdForChannel("stable"),
   nightly: computerUseHelperBundleIdForChannel("nightly"),
   preview: computerUseHelperBundleIdForChannel("nightly"),

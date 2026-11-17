@@ -6,6 +6,7 @@ import * as NodeURL from "node:url";
 
 import {
   COMPUTER_USE_HELPER_NAME,
+  DESKTOP_CHANNEL_APP_IDS,
   computerUseHelperBundleId,
   cuaDriverRelease,
 } from "@goat/shared/cuaDriverRelease";
@@ -320,11 +321,23 @@ export const stageComputerUseHelper = Effect.fn("stageComputerUseHelper")(functi
 }) {
   const refusal = computerUseHelperRefusal(input);
   if (refusal !== undefined) return yield* new CuaDriverArtifactError({ message: refusal });
+  const channel =
+    input.appId === DESKTOP_CHANNEL_APP_IDS.fork
+      ? "fork"
+      : input.appId === DESKTOP_CHANNEL_APP_IDS.nightly
+        ? "nightly"
+        : input.appId === DESKTOP_CHANNEL_APP_IDS.stable
+          ? "stable"
+          : undefined;
+  if (channel === undefined)
+    return yield* new CuaDriverArtifactError({
+      message: "No packaged helper channel matches this desktop app ID.",
+    });
   const path = yield* Path.Path;
   const built = yield* buildComputerUseHelper({
     repoRoot: input.repoRoot,
     output: path.join(input.stageRoot, "computer-use-helper"),
-    channel: input.appId.endsWith(".nightly") ? "nightly" : "stable",
+    channel,
     identity: undefined,
     adHoc: true,
     unsignedPackage: true,

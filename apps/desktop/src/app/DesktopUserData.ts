@@ -4,6 +4,7 @@ import * as Path from "effect/Path";
 import * as PlatformError from "effect/PlatformError";
 import * as Schema from "effect/Schema";
 import { isNightlyDesktopVersion } from "../updates/updateChannels.ts";
+import { isForkDesktopVersion } from "@goat/shared/desktopAppServer";
 
 export class DesktopUserDataInitializationError extends Schema.TaggedError<DesktopUserDataInitializationError>()(
   "DesktopUserDataInitializationError",
@@ -42,9 +43,11 @@ export const resolveUserDataPath = Effect.fn("desktop.userData.resolveUserDataPa
     const path = yield* Path.Path;
     const profile = input.isDevelopment
       ? "goat-desktop-dev"
-      : isNightlyDesktopVersion(input.appVersion)
-        ? "goat-desktop-nightly"
-        : "goat-desktop";
+      : isForkDesktopVersion(input.appVersion)
+        ? "goat-desktop-fork"
+        : isNightlyDesktopVersion(input.appVersion)
+          ? "goat-desktop-nightly"
+          : "goat-desktop";
     return path.join(input.appDataDirectory, profile);
   },
 );

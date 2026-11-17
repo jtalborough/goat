@@ -7,6 +7,11 @@ export const STABLE_DESKTOP_HOME_DIR_NAME = "desktop";
  * their own database, secrets and settings. DesktopChannelStateMigration seeds this from stable once.
  */
 export const NIGHTLY_DESKTOP_HOME_DIR_NAME = "desktop-nightly";
+export const FORK_DESKTOP_HOME_DIR_NAME = "desktop-fork";
+
+export function isForkDesktopVersion(version: string): boolean {
+  return /^\d+\.\d+\.\d+-fork\.\d{8}\.\d+$/.test(version);
+}
 
 /** `resolveDesktopStateDir` appends this for a packaged app and for an explicit home. */
 export const DESKTOP_USERDATA_DIR_NAME = "userdata";
@@ -21,6 +26,7 @@ export const DESKTOP_DEV_STATE_DIR_NAME = "dev";
 export const desktopAppServerStateDirs = [
   `${GOAT_HOME_DIR_NAME}/${NIGHTLY_DESKTOP_HOME_DIR_NAME}/${DESKTOP_USERDATA_DIR_NAME}`,
   `${GOAT_HOME_DIR_NAME}/${STABLE_DESKTOP_HOME_DIR_NAME}/${DESKTOP_USERDATA_DIR_NAME}`,
+  `${GOAT_HOME_DIR_NAME}/${FORK_DESKTOP_HOME_DIR_NAME}/${DESKTOP_USERDATA_DIR_NAME}`,
 ] as const;
 
 /** Quoted `$HOME/...` words for a POSIX `for` loop. The directories contain no shell metacharacters. */

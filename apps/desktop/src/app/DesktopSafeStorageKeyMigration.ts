@@ -1,4 +1,5 @@
 import { LEGACY_PACKAGED_RUNTIME_NAME } from "@goat/contracts/legacyT3Names";
+import { isForkDesktopVersion } from "@goat/shared/desktopAppServer";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
@@ -283,7 +284,9 @@ export const layer = (input: { readonly initialRuntimeName: string }) =>
       return yield* makeWith(
         // Unkeyed when bypassed: nothing is read and no marker is written, so the copy still runs
         // on the first launch without the opt-in.
-        (yield* bypassesOsKeyStore(environment)) ? async () => null : platformSafeStorageKeyStore,
+        (yield* bypassesOsKeyStore(environment)) || isForkDesktopVersion(environment.appVersion)
+          ? async () => null
+          : platformSafeStorageKeyStore,
         environment.platform,
         input.initialRuntimeName,
         environment.isPackaged,

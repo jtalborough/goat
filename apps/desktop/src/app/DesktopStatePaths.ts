@@ -7,6 +7,8 @@ import { LEGACY_HOME_DIR_NAME } from "@goat/contracts/legacyT3Names";
 import {
   DESKTOP_DEV_STATE_DIR_NAME,
   DESKTOP_USERDATA_DIR_NAME,
+  FORK_DESKTOP_HOME_DIR_NAME,
+  isForkDesktopVersion,
   NIGHTLY_DESKTOP_HOME_DIR_NAME,
   STABLE_DESKTOP_HOME_DIR_NAME,
 } from "@goat/shared/desktopAppServer";
@@ -75,9 +77,11 @@ export function resolveDesktopBaseDir(input: {
       return input.joinPath(
         input.homeDirectory,
         GOAT_HOME_DIR_NAME,
-        usesNightlyDesktopState(input.appVersion)
-          ? NIGHTLY_DESKTOP_HOME_DIR_NAME
-          : STABLE_DESKTOP_HOME_DIR_NAME,
+        isForkDesktopVersion(input.appVersion)
+          ? FORK_DESKTOP_HOME_DIR_NAME
+          : usesNightlyDesktopState(input.appVersion)
+            ? NIGHTLY_DESKTOP_HOME_DIR_NAME
+            : STABLE_DESKTOP_HOME_DIR_NAME,
       );
     }
     // The dev runner passes its home explicitly; this is a hand-launched dev build.

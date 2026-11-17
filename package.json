@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "fork:update": "node scripts/fork-desktop.ts",
     "prepare": "vp config --no-agent",
     "dev": "node scripts/dev-runner.ts dev",
     "profile:startup": "node scripts/profile-startup.mjs",

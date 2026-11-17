@@ -328,7 +328,10 @@ const startup = Effect.gen(function* () {
     legacyRuntimeName: DesktopEnvironment.legacyDesktopRuntimeAppName(
       environment.branding.stageLabel,
     ),
-    runtimeName: DesktopEnvironment.desktopRuntimeAppName(environment.branding.stageLabel),
+    runtimeName: DesktopEnvironment.desktopRuntimeAppName(
+      environment.branding.stageLabel,
+      environment.appVersion,
+    ),
   });
   yield* logStartupInfo("runtime logging configured", { logDir: environment.logDir });
   yield* desktopSettings.load;

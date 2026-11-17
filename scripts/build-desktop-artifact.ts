@@ -92,6 +92,13 @@ import { loadRepoEnv } from "./lib/public-config.ts";
 import { selectDesktopRuntimeExternalDependencies } from "./lib/desktop-external-packages.ts";
 import { resolveCatalogDependencies } from "./lib/resolve-catalog.ts";
 import { resolveTaggedSourceVersion } from "./lib/tagged-source-version.ts";
+import { isForkDesktopVersion } from "@goat/shared/desktopAppServer";
+import {
+  DESKTOP_APP_ID,
+  resolveDesktopAppId,
+  resolveDesktopProductName,
+} from "./lib/desktop-product-identity.ts";
+export { resolveDesktopAppId, resolveDesktopProductName };
 
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import * as NodeServices from "@effect/platform-node/NodeServices";
@@ -111,7 +118,6 @@ import { Command, Flag } from "effect/cli";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
 
 const LINUX_ICON_SIZES = [16, 22, 24, 32, 48, 64, 128, 256, 512] as const;
-const DESKTOP_APP_ID = "si.goat.desktop";
 const DESKTOP_UPDATE_REPOSITORY = "goat-si/goat-releases";
 const APPLE_TEAM_ID_PATTERN = /^[A-Z0-9]{10}$/u;
 
@@ -2921,7 +2927,9 @@ import { resolveDesktopUpdateChannel } from "./lib/desktop-release-channel.ts";
 export { resolveDesktopUpdateChannel };
 
 export function isDesktopPreviewVersion(version: string): boolean {
-  return /-pr\./.test(version) || /-preview\.\d{8}\.\d+$/.test(version);
+  return (
+    isForkDesktopVersion(version) || /-pr\./.test(version) || /-preview\.\d{8}\.\d+$/.test(version)
+  );
 }
 
 /** A "-preview." build runs nightly's helper; a "-pr." build keeps stable's (isNightlyDesktopVersion). */
@@ -2947,16 +2955,6 @@ export function resolvePackageManagerUserAgent(packageManager: string): string {
   }
 
   return `${trimmed.slice(0, versionSeparator)}/${trimmed.slice(versionSeparator + 1)}`;
-}
-
-export function resolveDesktopProductName(version: string): string {
-  return resolveDesktopUpdateChannel(version) === "nightly" ? "GOAT (Nightly)" : "GOAT";
-}
-
-export function resolveDesktopAppId(version: string): string {
-  return resolveDesktopUpdateChannel(version) === "nightly"
-    ? `${DESKTOP_APP_ID}.nightly`
-    : DESKTOP_APP_ID;
 }
 
 /** Desktop entry of packaged Linux builds; also their WM class (ADR-0014). */

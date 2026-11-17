@@ -11,6 +11,7 @@ export const DESKTOP_CHANNEL_APP_IDS = {
   stable: "si.goat.desktop",
   nightly: "si.goat.desktop.nightly",
   dev: "si.goat.desktop.dev",
+  fork: "si.goat.desktop.fork",
 } as const;
 export type DesktopChannel = keyof typeof DESKTOP_CHANNEL_APP_IDS;
 

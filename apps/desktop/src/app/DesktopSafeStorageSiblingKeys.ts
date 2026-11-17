@@ -18,6 +18,7 @@ import {
   type ChromiumKeyError,
 } from "../preview/BrowserImport/ChromiumKeys.ts";
 import { bypassesOsKeyStore } from "./DesktopDevSecretStorage.ts";
+import { isForkDesktopVersion } from "@goat/shared/desktopAppServer";
 import * as DesktopEnvironment from "./DesktopEnvironment.ts";
 import {
   platformSafeStorageKeyStore,
@@ -69,7 +70,7 @@ const PRODUCT_NAMES = ["goat", "GOAT", "GOAT (Nightly)", LEGACY_PACKAGED_RUNTIME
 const siblingRuntimeNames = (runtimeName: string): readonly string[] =>
   [
     ...new Set([
-      ...STAGE_LABELS.map(DesktopEnvironment.desktopRuntimeAppName),
+      ...STAGE_LABELS.map((stage) => DesktopEnvironment.desktopRuntimeAppName(stage)),
       ...STAGE_LABELS.map(DesktopEnvironment.legacyDesktopRuntimeAppName),
       ...PRODUCT_NAMES,
     ]),
@@ -225,7 +226,8 @@ export const layer = Layer.effect(
   Effect.gen(function* () {
     const environment = yield* DesktopEnvironment.DesktopEnvironment;
     const fs = yield* FileSystem.FileSystem;
-    const bypass = yield* bypassesOsKeyStore(environment);
+    const bypass =
+      (yield* bypassesOsKeyStore(environment)) || isForkDesktopVersion(environment.appVersion);
     // Browser imports use the same Chromium DPAPI wrapper and stdin-only PowerShell boundary.
     let windows: WindowsSiblingKeys | undefined;
     if (environment.platform === "win32" && !bypass) {
@@ -245,7 +247,10 @@ export const layer = Layer.effect(
       // Bypassed runs never read the key store; an unreadable file is still backed up, not lost.
       bypass ? async () => null : platformSafeStorageKeyStore,
       environment.platform,
-      DesktopEnvironment.desktopRuntimeAppName(environment.branding.stageLabel),
+      DesktopEnvironment.desktopRuntimeAppName(
+        environment.branding.stageLabel,
+        environment.appVersion,
+      ),
       windows,
     );
   }),

@@ -21,6 +21,7 @@ it.effect.each(["darwin", "linux", "win32"] as const)(
       }
       for (const [version, development, profile] of [
         ["1.2.3", false, "goat-desktop"],
+        ["1.2.3-fork.20261117.1", false, "goat-desktop-fork"],
         ["1.2.3-nightly.20261011.1", false, "goat-desktop-nightly"],
         ["1.2.3", true, "goat-desktop-dev"],
       ] as const) {
